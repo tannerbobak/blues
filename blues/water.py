@@ -8,7 +8,6 @@ import mdtraj as md
 import math
 from alchemy import AbsoluteAlchemicalFactory, AlchemicalState
 import numpy as np
-from openmmtools import testsystems
 
 def random_sphere_point(radius):
     r = radius * ( np.random.random()**(1./3.) )
@@ -307,7 +306,7 @@ class WaterNCMC(object):
                 movePos[resnum] = movePos[resnum] - water_dist + sphere_displacement
             #TODO check units, rotate water molecule
             #TODO make sure
-            movePos[:] = movePos*unit.nanometers
+            #movePos[:] = movePos*unit.nanometers
             context.setPositions(movePos)
 
     def runSim(self, md_simulation, nc_context, nc_integrator, dummy_simulation, movekey=None, nstepsNC=25, nstepsMD=1000, niter=10,
@@ -410,14 +409,14 @@ class WaterNCMC(object):
 
             for stepscarried in range(nstepsNC):
                 #at start switch alchemical water with water in sphere distance
-                if 0:
+                if 1:
                     if stepscarried == 0:
                         start_state = md_simulation.context.getState(getPositions=True, getVelocities=True)
                         start_pos = start_state.getPositions(asNumpy=True)
                         print('start_pos', start_pos[residueList[0]])
                         start_vel = start_state.getVelocities(asNumpy=True)
-                        switch_pos = start_pos[:]
-                        switch_vel = start_vel[:]
+                        switch_pos = np.copy(start_pos)
+                        switch_vel = np.copy(start_vel)
                         prot_com = self.calculate_com(switch_pos, total_mass = prot_total_mass,
                                             mass_list = prot_mass_list, residueList= protein_residues)
                         #pick random water within the sphere radius
@@ -429,8 +428,10 @@ class WaterNCMC(object):
                             water_choice = water_residues[water_index]
                             oxygen_pos = start_pos[water_choice[0]]
                             water_distance = np.linalg.norm(oxygen_pos._value - prot_com._value)
+                            print('distance', water_distance)
                             if water_distance <= (self.radius.value_in_unit(unit.nanometers)):
                                 dist_boolean = 1
+                            print('water_choice', water_choice)
                         #replace chosen water's positions/velocities with alchemical water
                         for i in range(3):
                             switch_pos[residueList[i]] = start_pos[water_choice[i]]
@@ -438,6 +439,11 @@ class WaterNCMC(object):
                             switch_pos[water_choice[i]] = start_pos[residueList[i]]
                             switch_vel[water_choice[i]] = start_vel[residueList[i]]
                         print('after_switch', switch_pos[residueList[0]])
+                        if write_ncmc_interval:
+                            positions = nc_context.getState(getPositions=True).getPositions(asNumpy=True)
+                            dummy_simulation.context.setPositions(positions)
+                            h5reporter.report(dummy_simulation, dummy_simulation.context.getState(True, True))
+
                         nc_context.setPositions(switch_pos)
                         nc_context.setVelocities(switch_vel)
 
