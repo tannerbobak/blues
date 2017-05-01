@@ -22,16 +22,17 @@ from optparse import OptionParser
 def runNCMC(platform_name):
     #Define some options
     opt = { 'temperature' : 300.0, 'friction' : 1, 'dt' : 0.002,
-            'nIter' : 10, 'nstepsNC' : 10, 'nstepsMD' : 5000,
+            'nIter' : 100, 'nstepsNC' : 100, 'nstepsMD' : 1000,
             'nonbondedMethod' : 'PME', 'nonbondedCutoff': 10, 'constraints': 'HBonds',
             'trajectory_interval' : 1000, 'reporter_interval' : 1000,
-            'platform' : platform_name,
+            'platform' : 'CUDA',
             'verbose' : True }
 
     #Generate the ParmEd Structure
-    prmtop = utils.get_data_filename('blues', 'tests/data/eqToluene.prmtop')#
-    inpcrd = utils.get_data_filename('blues', 'tests/data/eqToluene.inpcrd')
-    struct = parmed.load_file(prmtop, xyz=inpcrd)
+    #prmtop = utils.get_data_filename('blues', 'tests/data/eqToluene.prmtop')#
+    #inpcrd = utils.get_data_filename('blues', 'tests/data/eqToluene.inpcrd')
+    #struct = parmed.load_file(prmtop, xyz=inpcrd)
+    struct  = parmed.load_file('6NX_1-complex.prmtop', xyz='6NX_1-complex.inpcrd')
 
     #Define the 'model' object we are perturbing here.
     # Calculate particle masses of object to be moved

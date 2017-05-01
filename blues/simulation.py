@@ -73,8 +73,8 @@ class Simulation(object):
         beta = 1.0 / kT
         self.beta = beta
 
-        self.work_keys = ['total_work', 'lambda', 'shadow_work',
-                          'protocol_work', 'Eold', 'Enew','Epert']
+        self.work_keys = ['lambda', 'shadow_work',
+                          'protocol_work', 'Eold', 'Enew']
 
         self.state_keys = { 'getPositions' : True,
                        'getVelocities' : True,
@@ -150,7 +150,7 @@ class Simulation(object):
         """
         workinfo = {}
         for param in parameters:
-            workinfo['param'] = nc_integrator.getGlobalVariableByName(param)
+            workinfo[param] = nc_integrator.getGlobalVariableByName(param)
         return workinfo
 
     def writeFrame(self, simulation, outfname):
@@ -196,7 +196,7 @@ class Simulation(object):
             self.accept += 1
             print('NCMC MOVE ACCEPTED: log_ncmc {} > randnum {}'.format(log_ncmc, randnum) )
             self.md_sim.context.setPositions(nc_state1['positions'])
-            #self.writeFrame(self.md_sim, 'MD-iter{}.pdb'.format(self.current_iter))
+            self.writeFrame(self.md_sim, 'MD-iter{}.pdb'.format(self.current_iter))
         else:
             self.reject += 1
             print('NCMC MOVE REJECTED: {} < {}'.format(log_ncmc, randnum) )
@@ -276,7 +276,7 @@ class Simulation(object):
         for n in range(self.nIter):
             self.current_iter = int(n)
             self.setStateConditions()
-            self.simulateNCMC()
+            self.simulateNCMC(verbose=True)
             self.chooseMove()
             self.simulateMD()
 

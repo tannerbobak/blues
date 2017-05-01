@@ -226,6 +226,8 @@ class SimulationFactory(object):
         atom_indices : list
             Atom indicies of the model.
         """
+        import logging
+        logging.getLogger('openmmtools.alchemy').setLevel(logging.ERROR)
         factory = alchemy.AlchemicalFactory()
         alch_region = alchemy.AlchemicalRegion(alchemical_atoms=atom_indices)
         alch_system = factory.create_alchemical_system(system, alch_region)
@@ -268,14 +270,21 @@ class SimulationFactory(object):
             # 'lambda' = step/totalsteps where step corresponds to current NCMC step,
             functions = { 'lambda_sterics' : 'min(1, (1/0.3)*abs(lambda-0.5))',
                           'lambda_electrostatics' : 'step(0.2-lambda) - 1/0.2*lambda*step(0.2-lambda) + 1/0.2*(lambda-0.8)*step(lambda-0.8)' }
+            from blues.integrators import TestLangevinIntegrator
+            #from openmmtools.integrators import NonequilibriumLangevinIntegrator
 
-            integrator = NCMCVVAlchemicalIntegrator(temperature*unit.kelvin,
-                                                    system,
-                                                    functions,
-                                                    nsteps=nstepsNC,
-                                                    direction='insert',
-                                                    timestep=0.001*unit.picoseconds,
-                                                    steps_per_propagation=1)
+            integrator = TestLangevinIntegrator(alchemical_functions=functions,
+                                       temperature=temperature*unit.kelvin,
+                                       nsteps_neq=nstepsNC,
+                                       timestep=0.002*unit.picoseconds)
+
+            #integrator = NCMCVVAlchemicalIntegrator(temperature*unit.kelvin,
+            #                                        system,
+            #                                        functions,
+            #                                        nsteps=nstepsNC,
+            #                                        direction='insert',
+            #                                        timestep=0.001*unit.picoseconds,
+            #                                        steps_per_propagation=1)
         else:
             integrator = openmm.LangevinIntegrator(temperature*unit.kelvin,
                                                    friction/unit.picosecond,
