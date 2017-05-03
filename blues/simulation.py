@@ -73,8 +73,13 @@ class Simulation(object):
         beta = 1.0 / kT
         self.beta = beta
 
-        self.work_keys = ['lambda', 'shadow_work',
-                          'protocol_work', 'Eold', 'Enew']
+        if 'verbose' in opt:
+            self.verbose = opt['verbose']
+        else:
+            self.verbose = False
+
+        self.work_keys = ['total_work', 'lambda', 'shadow_work',
+                          'protocol_work']
 
         self.state_keys = { 'getPositions' : True,
                        'getVelocities' : True,
