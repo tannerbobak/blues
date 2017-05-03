@@ -164,11 +164,11 @@ class Simulation(object):
         topology = simulation.topology
         system = simulation.context.getSystem()
         state = simulation.context.getState(getPositions=True,
-                                            getVelocities=True,
-                                            getParameters=True,
-                                            getForces=True,
-                                            getParameterDerivatives=True,
-                                            getEnergy=True,
+                                            getVelocities=False,
+                                            getParameters=False,
+                                            getForces=False,
+                                            getParameterDerivatives=False,
+                                            getEnergy=False,
                                             enforcePeriodicBox=True)
 
 
@@ -187,6 +187,7 @@ class Simulation(object):
         nc_state1 = self.current_state['nc']['state1']
 
         log_ncmc = self.nc_integrator.getLogAcceptanceProbability(self.nc_context)
+        print('LogAcceptanceProbability', log_ncmc)
         randnum =  math.log(np.random.random())
 
         # Compute Alchemical Correction Term
@@ -197,10 +198,13 @@ class Simulation(object):
             correction_factor = (nc_state0['potential_energy'] - md_state0['potential_energy'] + alch_state1['potential_energy'] - nc_state1['potential_energy']) * (-1.0/self.nc_integrator.kT)
             log_ncmc = log_ncmc + correction_factor
 
+            print('Alchemical Correction:', correction_factor)
+
         if log_ncmc > randnum:
             self.accept += 1
             print('NCMC MOVE ACCEPTED: log_ncmc {} > randnum {}'.format(log_ncmc, randnum) )
             self.md_sim.context.setPositions(nc_state1['positions'])
+
             self.writeFrame(self.md_sim, 'MD-iter{}.pdb'.format(self.current_iter))
         else:
             self.reject += 1
@@ -254,15 +258,15 @@ class Simulation(object):
             self.current_stepMD = self.md_sim.currentStep
         except Exception as e:
             print(e)
-            stateinfo = self.getStateInfo(self.md_sim.context, self.state_keys)
-            last_x, last_y = np.shape(md_state0['positions'])
-            reshape = (np.reshape(md_state0['positions'], (1, last_x, last_y))).value_in_unit(unit.nanometers)
-            print('potential energy before NCMC', md_state0['potential_energy'])
-            print('kinetic energy before NCMC', md_state0['kinetic_energy'])
-
-            last_top = mdtraj.Topology.from_openmm(self.md_sim.topology)
-            broken_frame = mdtraj.Trajectory(xyz=reshape, topology=last_top)
-            broken_frame.save_pdb('MD-blues_fail-iter{}_md{}.pdb'.format(self.current_iter, self.current_stepMD))
+            #stateinfo = self.getStateInfo(self.md_sim.context, self.state_keys)
+            #last_x, last_y = np.shape(md_state0['positions'])
+            #reshape = (np.reshape(md_state0['positions'], (1, last_x, last_y))).value_in_unit(unit.nanometers)
+            print('potential energy after NCMC', md_state0['potential_energy'])
+            print('kinetic energy after NCMC', md_state0['kinetic_energy'])
+            self.writeFrame(self.md_sim, 'MD-fail-iter{}.pdb'.format(self.current_iter))
+            #last_top = mdtraj.Topology.from_openmm(self.md_sim.topology)
+            #broken_frame = mdtraj.Trajectory(xyz=reshape, topology=last_top)
+            #broken_frame.save_pdb('MD-blues_fail-iter{}_md{}.pdb'.format(self.current_iter, self.current_stepMD))
             exit()
 
         md_state0 = self.getStateInfo(self.md_sim.context, self.state_keys)
@@ -281,7 +285,7 @@ class Simulation(object):
         for n in range(self.nIter):
             self.current_iter = int(n)
             self.setStateConditions()
-            self.simulateNCMC(verbose=True)
+            self.simulateNCMC(verbose=False)
             self.chooseMove()
             self.simulateMD()
 

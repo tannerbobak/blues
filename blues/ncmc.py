@@ -160,7 +160,10 @@ class MoveProposal(object):
         initial_positions = nc_context.getState(getPositions=True).getPositions(asNumpy=True)
         positions = copy.deepcopy(initial_positions)
 
+
         model.positions = positions[model.atom_indices]
+        init_pos = model.positions
+
         model.center_of_mass = model.getCenterOfMass(model.positions, model.masses)
         reduced_pos = model.positions - model.center_of_mass
 
@@ -176,7 +179,9 @@ class MoveProposal(object):
         nc_context.setPositions(positions)
         positions = nc_context.getState(getPositions=True).getPositions(asNumpy=True)
         model.positions = positions[model.atom_indices]
-
+        print('InitialPos:', init_pos)
+        print('FinalPos:', model.positions)
+        #print('Diff:', init_pos - model.positions)
         return model, nc_context
 
     def setMove(self, method, step):
@@ -297,7 +302,8 @@ class SimulationFactory(object):
         else:
             platform = openmm.Platform.getPlatformByName(platform)
             #prop = dict(DeviceIndex='2') # For local testing with multi-GPU Mac.
-            simulation = app.Simulation(structure.topology, system, integrator, platform) #, prop)
+            prop = dict(Precision='mixed')
+            simulation = app.Simulation(structure.topology, system, integrator, platform, prop)
 
         if verbose:
             # OpenMM platform information
@@ -315,7 +321,6 @@ class SimulationFactory(object):
             for prop in mmplat.getPropertyNames():
                 val = mmplat.getPropertyValue(simulation.context, prop)
                 print(prop, ':', val, file=printfile)
-
         # Set initial positions/velocities
         # Will get overwritten from saved State.
         simulation.context.setPositions(structure.positions)
