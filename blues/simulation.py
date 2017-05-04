@@ -196,7 +196,7 @@ class Simulation(object):
             alch_state1 = self.getStateInfo(self.alch_sim.context, self.state_keys)
             self.setSimState('alch', 'state1', alch_state1)
             correction_factor = (nc_state0['potential_energy'] - md_state0['potential_energy'] + alch_state1['potential_energy'] - nc_state1['potential_energy']) * (-1.0/self.nc_integrator.kT)
-            log_ncmc = log_ncmc + correction_factor
+            #log_ncmc = log_ncmc + correction_factor
 
             print('Alchemical Correction:', correction_factor)
 
@@ -208,7 +208,7 @@ class Simulation(object):
             self.writeFrame(self.md_sim, 'MD-iter{}.pdb'.format(self.current_iter))
         else:
             self.reject += 1
-            print('NCMC MOVE REJECTED: {} < {}'.format(log_ncmc, randnum) )
+            print('NCMC MOVE REJECTED: log_ncmc {} < randnum {}'.format(log_ncmc, randnum) )
             self.nc_context.setPositions(md_state0['positions'])
 
         self.nc_integrator.reset()
