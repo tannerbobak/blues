@@ -188,7 +188,8 @@ class Simulation(object):
 
         log_ncmc = self.nc_integrator.getLogAcceptanceProbability(self.nc_context)
         print('LogAcceptanceProbability', log_ncmc)
-        randnum =  math.log(np.random.random())
+        np.random.seed(2017)
+        randnum =  math.log(np.random.random(   ))
 
         # Compute Alchemical Correction Term
         if np.isnan(log_ncmc) == False:
