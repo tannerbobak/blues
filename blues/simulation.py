@@ -197,7 +197,7 @@ class Simulation(object):
             alch_state1 = self.getStateInfo(self.alch_sim.context, self.state_keys)
             self.setSimState('alch', 'state1', alch_state1)
             correction_factor = (nc_state0['potential_energy'] - md_state0['potential_energy'] + alch_state1['potential_energy'] - nc_state1['potential_energy']) * (-1.0/self.nc_integrator.kT)
-            #log_ncmc = log_ncmc + correction_factor
+            log_ncmc = log_ncmc + correction_factor
 
             print('Alchemical Correction:', correction_factor)
 
