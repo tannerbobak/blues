@@ -729,7 +729,6 @@ class BLUESSimulation(object):
         """
         stateinfo = {}
         state  = context.getState(**state_keys)
-        #stateinfo['iter'] = int(currentIter)
         stateinfo['positions'] =  state.getPositions(asNumpy=True)
         stateinfo['velocities'] = state.getVelocities(asNumpy=True)
         stateinfo['potential_energy'] = state.getPotentialEnergy()
@@ -826,7 +825,7 @@ class BLUESSimulation(object):
         """
         self.stateTable[simkey][stateidx] = stateinfo
 
-    def _sync_states_md_to_ncmc_(self, currentIter):
+    def _sync_states_md_to_ncmc_(self):
         """Retrieves data on the current State of the MD context to
         replace the box vectors, positions, and velocties in the NCMC context.
 
@@ -834,21 +833,13 @@ class BLUESSimulation(object):
         # Retrieve the state data from the MD/NCMC contexts before proposed move
         md_state0 = self.getStateFromContext(self._md_sim.context, self._state_keys_)
         self._set_stateTable_('md', 'state0', md_state0)
-        self._md_sim.currentIter = currentIter
 
-        #TODO: CHECK SHOULD THIS BE BEFORE OR AFTER SYNCING FROM MD?
-        #ncmc_state0 = self.getStateFromContext(self._ncmc_sim.context, self._state_keys_, currentIter)
-        #self._set_stateTable_('ncmc', 'state0', ncmc_state0)
-        #self._ncmc_sim.currentIter = currentIter
+
+        ncmc_state0 = self.getStateFromContext(self._ncmc_sim.context, self._state_keys_)
+        self._set_stateTable_('ncmc', 'state0', ncmc_state0)
 
         # Replace ncmc context data from the md context
         self._ncmc_sim.context = self.setContextFromState(self._ncmc_sim.context, md_state0)
-
-        #TODO: CHECK SHOULD THIS BE BEFORE OR AFTER SYNCING FROM MD?
-        # IMPACTS ALCHEMICAL CORRECTION CALCULATION?
-        ncmc_state0 = self.getStateFromContext(self._ncmc_sim.context, self._state_keys_)
-        self._set_stateTable_('ncmc', 'state0', ncmc_state0)
-        self._ncmc_sim.currentIter = currentIter
 
     def _stepNCMC_(self, nstepsNC, moveStep, move_engine=None):
         """Function that advances the NCMC simulation."""
@@ -857,14 +848,14 @@ class BLUESSimulation(object):
         #choose a move to be performed according to move probabilities
         #TODO: will have to change to work with multiple alch region
         if not move_engine: move_engine = self._move_engine
+        self._ncmc_sim.currentIter = self.currentIter
         move_engine.selectMove()
-
+        lastStep = nstepsNC-1
         for step in range(int(nstepsNC)):
             try:
                 #Attempt anything related to the move before protocol is performed
-                if step == 0:
+                if not step:
                     self._ncmc_sim.context = move_engine.selected_move.beforeMove(self._ncmc_sim.context)
-                    #self._ncmc_sim.context = self._move_engine.moves[move_idx].beforeMove(self._ncmc_sim.context)
 
                 # Attempt selected MoveEngine Move at the halfway point
                 #to ensure protocol is symmetric
@@ -878,11 +869,11 @@ class BLUESSimulation(object):
                 # Do 1 NCMC step with the integrator
                 self._ncmc_sim.step(1)
 
-                ###DEBUG options at every NCMC step
+                #DEBUG options at every NCMC step
                 logger.debug('%s' % self.getIntegratorInfo(self._ncmc_sim.context._integrator, self._integrator_keys_))
 
                 #Attempt anything related to the move after protocol is performed
-                if step == nstepsNC-1:
+                if step == lastStep:
                     self._ncmc_sim.context = move_engine.selected_move.afterMove(self._ncmc_sim.context)
 
             except Exception as e:
@@ -909,10 +900,7 @@ class BLUESSimulation(object):
         alch_PE = self._alch_sim.context.getState(getEnergy=True).getPotentialEnergy()
 
         correction_factor = (ncmc_state0_PE - md_state0_PE + alch_PE - ncmc_state1['potential_energy']) * (-1.0/self._ncmc_sim.context._integrator.kT)
-
-        #print('Alchemical Correction', correction_factor)
-        #print(ncmc_state0_PE, md_state0_PE)
-        #print(ncmc_state0_PE - md_state0_PE)
+        logger.debug('Alchemical Correction = %.6f' % correction_factor)
 
         return correction_factor
 
@@ -949,9 +937,8 @@ class BLUESSimulation(object):
 
     def _stepMD_(self, nstepsMD):
         """Function that advances the MD simulation."""
-        currentIter = self._md_sim.currentIter
         logger.info('Advancing %i MD steps...' % (nstepsMD))
-
+        self._md_sim.currentIter = self.currentIter
         #Retrieve MD state before proposed move
         # Helps determine if previous iteration placed ligand poorly
         md_state0 = self.stateTable['md']['state0']
@@ -964,7 +951,7 @@ class BLUESSimulation(object):
                 logger.error('potential energy before NCMC: %s' % md_state0['potential_energy'])
                 logger.error('kinetic energy before NCMC: %s' % md_state0['kinetic_energy'])
                 #Write out broken frame
-                utils.saveSimulationFrame(self._md_sim, 'MD-fail-it%s-md%i.pdb' %(currentIter, self._md_sim.currentStep))
+                utils.saveSimulationFrame(self._md_sim, 'MD-fail-it%s-md%i.pdb' %(self.currentIter, self._md_sim.currentStep))
                 sys.exit(1)
 
         #If MD finishes okay, update stateTable
@@ -1008,11 +995,11 @@ class BLUESSimulation(object):
 
         logger.info('Running %i BLUES iterations...' % (nIter))
         #set inital conditions
-        self._sync_states_md_to_ncmc_(currentIter=0)
+        self._sync_states_md_to_ncmc_()
         for N in range(int(nIter)):
             self.currentIter = N
             logger.info('BLUES Iteration: %s' % N)
-            self._sync_states_md_to_ncmc_(N)
+            self._sync_states_md_to_ncmc_()
             self._stepNCMC_(nstepsNC, moveStep)
             self._accept_reject_move_(write_move)
             self._stepMD_(nstepsMD)
@@ -1072,11 +1059,12 @@ class MonteCarloSimulation(BLUESSimulation):
         #controls how many mc moves are performed during each iteration
         if not mc_per_iter: mc_per_iter = self._config['mc_per_iter']
 
-        self._sync_states_md_to_ncmc_(currentIter=0)
+        self._sync_states_md_to_ncmc_()
         for N in range(nIter):
+            self.currentIter = N
             logger.info('MonteCarlo Iteration: %s' % N)
             for i in range(mc_per_iter):
-                self._sync_states_md_to_ncmc_(currentIter=N)
+                self._sync_states_md_to_ncmc_()
                 self._stepMC_()
                 self._accept_reject_move_(write_move)
             self._stepMD_(nstepsMD)
