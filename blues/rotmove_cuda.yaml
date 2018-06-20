@@ -50,7 +50,7 @@ simulation:
   dt: 0.004 * picoseconds
   friction: 1 * 1/picoseconds
   temperature: 300 * kelvin
-  nIter: 5
+  nIter: 100
   nstepsMD: 1000
   nstepsNC: 1000
   #Defauilt
