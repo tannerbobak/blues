@@ -3,6 +3,6 @@
 short_version = '0.2.1'
 build_number = '4'
 version = '0.2.1.dev4'
-full_version = '0.2.1.dev4-d8b916b'
-git_revision = 'd8b916b1770c46be423fe1cac77c05cde1dbe701'
+full_version = '0.2.1.dev4-01da6f6'
+git_revision = '01da6f6581be5ef52814eda308afb484d647462b'
 release = False
