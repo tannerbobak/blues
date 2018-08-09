@@ -1,20 +1,20 @@
-# YAML configuration for simulating 3-iodotoluenetoluene bound to T4 lysozyme
+# YAML configuration for simulating toluene bound to T4 lysozyme
 # Atoms 5 angstroms away from the ligand are frozen
 # Simulation on a CUDA device with index 0
 # NVT simulation with Hydrogen Mass Repartioning + 4fs timesteps
-# 5000 BLUES iterations (random rotational move proposals), 10000 steps of NCMC and MD per iteration
+# 5 BLUES iterations (random rotational move proposals), 1000 steps of NCMC and MD per iteration
 # MD Reporters: State (energies), NetCDF, Restart, and speed for benchmarking
 # NCMC Reporters: NetCDF (stores protocol work at 1st, mid, and last frame) and speed for benchmarking
 
-output_dir: ~
-outfname: t4-iodotoluene
+output_dir: .
+outfname: t4-toluene
 logger:
   level: info
   stream: True
 
 structure:
-  filename: 3iodo.prmtop
-  xyz: 3iodo-eq.inpcrd
+  filename: tests/data/eqToluene.prmtop
+  xyz: tests/data/eqToluene.inpcrd
 
 system:
   nonbondedMethod: PME
@@ -52,10 +52,10 @@ simulation:
   dt: 0.004 * picoseconds
   friction: 1 * 1/picoseconds
   temperature: 300 * kelvin
-  nIter: 5000
+  nIter: 5
   nstepsMD: 10000
   nstepsNC: 10000
-  #Defauilt
+  #Default
   nprop: 1
   propLambda: 0.3
   ###Advanced: Add additional relaxation steps in NCMC simulation###
@@ -69,7 +69,11 @@ simulation:
 
 md_reporters:
   state:
-    reportInterval: 2500
+    reportInterval: 1
+    potentialEnergy: True
+    kineticEnergy: True
+    temperature: True
+    volume: True
   traj_netcdf:
     reportInterval: 2500
   restart:
@@ -77,7 +81,7 @@ md_reporters:
   stream:
     title: md
     reportInterval: 2500
-    totalSteps: 5000000 #nIter * nstepsMD
+    totalSteps: 50000 #nIter * nstepsMD
     step: True
     speed: True
     progress: True
@@ -85,6 +89,12 @@ md_reporters:
     currentIter : True
 
 ncmc_reporters:
+  state:
+    reportInterval: 1
+    potentialEnergy: True
+    kineticEnergy: True
+    temperature: True
+    volume: True
   traj_netcdf:
     frame_indices: [1, 0.5, -1]
     alchemicalLambda: True
@@ -92,7 +102,7 @@ ncmc_reporters:
   stream:
     title: ncmc
     reportInterval: 2000
-    totalSteps: 5000000 #nIter * nstepsNC
+    totalSteps: 50000 #nIter * nstepsNC
     step: True
     speed: True
     progress: True

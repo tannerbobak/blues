@@ -4,5 +4,5 @@ short_version = '0.2.2'
 build_number = '0'
 version = '0.2.2.dev0'
 full_version = '0.2.2.dev0'
-git_revision = '2b2c5b5c795b25d36862611a372df83a102b45db'
+git_revision = 'e02fc8c9d54e5a20fc75a701e600ea43789d77fc'
 release = True

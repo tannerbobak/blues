@@ -1,15 +1,15 @@
-from blues.moves import RandomLigandRotationMove
+from blues.moves import RandomLigandTranslationMove
 from blues.engine import MoveEngine
 from blues.simulation import *
 import json
 from blues.settings import *
 
 # Parse a YAML configuration, return as Dict
-cfg = Settings('iodotoluene_rotmove_cuda.yaml').asDict()
+cfg = Settings('transmove_cuda.yaml').asDict()
 structure = cfg['Structure']
 
 #Select move type
-ligand = RandomLigandRotationMove(structure, 'LIG')
+ligand = RandomLigandTranslationMove(structure, 'LIG')
 #Iniitialize object that selects movestep
 ligand_mover = MoveEngine(ligand)
 
