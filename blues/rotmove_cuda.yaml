@@ -8,9 +8,7 @@
 
 output_dir: .
 outfname: t4-toluene
-logger:
-  level: info
-  stream: True
+logger_level: info
 
 structure:
   filename: tests/data/eqToluene.prmtop
