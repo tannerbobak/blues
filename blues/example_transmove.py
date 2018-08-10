@@ -1,4 +1,4 @@
-from blues.moves import RandomLigandTranslationMove
+from translation_move import RandomLigandTranslationMove
 from blues.engine import MoveEngine
 from blues.simulation import *
 import json
