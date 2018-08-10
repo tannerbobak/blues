@@ -63,7 +63,7 @@ class RandomLigandTranslationMove(Move):
                   atom_indices.append(atom.index)
         return atom_indices
 
-    def _random_three_vector():
+    def _random_three_vector(self):
         """
         Generates a random 3D unit vector (direction) with a uniform spherical distribution
         Algo from http://stackoverflow.com/questions/5408276/python-uniform-spherical-distribution
@@ -95,7 +95,7 @@ class RandomLigandTranslationMove(Move):
         positions = context.getState(getPositions=True).getPositions(asNumpy=True)
         self.positions = positions[self.atom_indices]
 
-        vec = _random_three_vector()
+        vec = self._random_three_vector()
 
         """
         self.center_of_mass = self.getCenterOfMass(self.positions, self.masses)
