@@ -1,5 +1,5 @@
 from blues.moves import Move
-
+import numpy as np
 
 class RandomLigandTranslationMove(Move):
     """Move that provides methods for calculating properties on the
