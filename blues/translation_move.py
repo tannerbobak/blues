@@ -116,7 +116,9 @@ class RandomLigandTranslationMove(Move):
         rot_move = np.dot(reduced_pos, rand_rotation_matrix) * positions.unit + self.center_of_mass
         """
 
-        positions = positions * unit.nanometers + vec*self.step*10
+        print(positions)
+        print(vec)
+        #positions = positions * unit.nanometers + vec*self.step*10
 
         context.setPositions(positions)
         positions = context.getState(getPositions=True).getPositions(asNumpy=True)
